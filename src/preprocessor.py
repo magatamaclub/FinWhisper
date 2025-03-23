@@ -1,8 +1,9 @@
 import re
 import json
 import jieba
+import jieba.posseg as pseg
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from snownlp import SnowNLP
 
 
@@ -42,6 +43,46 @@ class TextPreprocessor:
             ]
         )
 
+        # 加载金融领域词典
+        self.load_finance_lexicons()
+
+    def load_finance_lexicons(self):
+        """加载金融领域词典"""
+        self.finance_terms = {}
+
+        # 加载股票词典
+        with open("lexicons/finance_stocks.tsv", "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    term, weight = parts[0], parts[1]
+                else:
+                    term, weight = parts[0], "1.0"  # 如果没有权重，默认使用1.0
+                self.finance_terms[term] = float(weight)
+                jieba.add_word(term, freq=None, tag="STOCK")
+
+        # 加载金融术语词典
+        with open("lexicons/finance_terms.tsv", "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    term, weight = parts[0], parts[1]
+                else:
+                    term, weight = parts[0], "1.0"  # 如果没有权重，默认使用1.0
+                self.finance_terms[term] = float(weight)
+                jieba.add_word(term, freq=None, tag="TERM")
+
+        # 加载金融指标词典
+        with open("lexicons/finance_indicators.tsv", "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    term, weight = parts[0], parts[1]
+                else:
+                    term, weight = parts[0], "1.0"  # 如果没有权重，默认使用1.0
+                self.finance_terms[term] = float(weight)
+                jieba.add_word(term, freq=None, tag="INDICATOR")
+
     def clean_text(self, text: str) -> str:
         """清理文本"""
         # 去除HTML标签
@@ -60,24 +101,53 @@ class TextPreprocessor:
         text = re.sub(r"\[[\w\-\/]+\]", "", text)
         return text.strip()
 
-    def segment_text(self, text: str) -> List[str]:
-        """分词"""
-        words = jieba.lcut(text)
-        # 去除停用词
-        words = [w for w in words if w not in self.stopwords]
+    def segment_text(self, text: str) -> List[Tuple[str, str]]:
+        """分词并标注词性"""
+        words = []
+        # 使用posseg进行词性标注
+        for word, flag in pseg.cut(text):
+            # 去除停用词，但保留金融术语
+            if word not in self.stopwords or word in self.finance_terms:
+                words.append((word, flag))
         return words
 
     def extract_features(self, text: str) -> Dict[str, Any]:
         """特征提取"""
         s = SnowNLP(text)
+        word_pairs = self.segment_text(text)
+        words = [word for word, _ in word_pairs]
+
+        # 提取金融实体
+        finance_entities = {
+            "stocks": [
+                word
+                for word, flag in word_pairs
+                if word in self.finance_terms and flag == "n"
+            ],
+            "terms": [
+                word
+                for word, flag in word_pairs
+                if word in self.finance_terms and flag == "n"
+            ],
+            "indicators": [
+                word
+                for word, flag in word_pairs
+                if word in self.finance_terms and flag == "n"
+            ],
+        }
+
         return {
             "sentiment_score": s.sentiments,  # 情感得分
             "keywords": s.keywords(3),  # 关键词
             "text_length": len(text),  # 文本长度
-            "word_count": len(self.segment_text(text)),  # 词数
+            "word_count": len(words),  # 词数
             "contains_url": 1 if "http" in text else 0,  # 是否包含URL
             "contains_mention": 1 if "@" in text else 0,  # 是否包含@
             "contains_topic": 1 if "#" in text else 0,  # 是否包含话题
+            "finance_entities": finance_entities,  # 金融实体
+            "finance_entity_count": sum(
+                len(entities) for entities in finance_entities.values()
+            ),  # 金融实体数量
         }
 
     def process_weibo_data(self, input_file: str, output_file: str):
@@ -91,7 +161,8 @@ class TextPreprocessor:
             # 清理文本
             cleaned_text = self.clean_text(post["text"])
             # 分词
-            words = self.segment_text(cleaned_text)
+            word_pairs = self.segment_text(cleaned_text)
+            words = [word for word, _ in word_pairs]
             # 提取特征
             features = self.extract_features(cleaned_text)
 

@@ -1,0 +1,6 @@
+{
+  "model_name": "bert-base-chinese",
+  "max_length": 256,
+  "batch_size": 4,
+  "learning_rate": 2e-05
+}
