@@ -92,8 +92,8 @@ The trained models are hosted on Hugging Face Hub. You can download them using:
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 # Load the model 加载模型
-model = AutoModelForMaskedLM.from_pretrained("magatamaclub/finwhisper")
-tokenizer = AutoTokenizer.from_pretrained("magatamaclub/finwhisper")
+model = AutoModelForMaskedLM.from_pretrained("hyanwang/finwhisper")
+tokenizer = AutoTokenizer.from_pretrained("hyanwang/finwhisper")
 
 # The models will be automatically downloaded and cached
 # 模型将自动下载并缓存
@@ -102,7 +102,7 @@ tokenizer = AutoTokenizer.from_pretrained("magatamaclub/finwhisper")
 或者手动下载并放置在 models 目录：
 Or manually download and place in models directory:
 
-1. 访问模型页面 Visit model page: [FinWhisper on Hugging Face](https://huggingface.co/magatamaclub/finwhisper)
+1. 访问模型页面 Visit model page: [FinWhisper on Hugging Face](https://huggingface.co/hyanwang/finwhisper)
 2. 下载所需文件 Download required files
 3. 将文件放在 models/best_model/ 目录下 Place files in models/best_model/
 

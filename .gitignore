@@ -39,3 +39,5 @@ models/runs/
 
 # Redis
 dump.rdb
+
+upload_to_hf.py
