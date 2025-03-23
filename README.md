@@ -83,7 +83,30 @@ This will:
 - Save the best model 保存最佳模型
 - Generate evaluation metrics 生成评估指标
 
-### 4. Using the API 使用API
+### 4. Download Pre-trained Models 下载预训练模型
+
+The trained models are hosted on Hugging Face Hub. You can download them using:
+预训练模型托管在 Hugging Face Hub 上。您可以通过以下方式下载：
+
+```python
+from transformers import AutoModelForMaskedLM, AutoTokenizer
+
+# Load the model 加载模型
+model = AutoModelForMaskedLM.from_pretrained("magatamaclub/finwhisper")
+tokenizer = AutoTokenizer.from_pretrained("magatamaclub/finwhisper")
+
+# The models will be automatically downloaded and cached
+# 模型将自动下载并缓存
+```
+
+或者手动下载并放置在 models 目录：
+Or manually download and place in models directory:
+
+1. 访问模型页面 Visit model page: [FinWhisper on Hugging Face](https://huggingface.co/magatamaclub/finwhisper)
+2. 下载所需文件 Download required files
+3. 将文件放在 models/best_model/ 目录下 Place files in models/best_model/
+
+### 5. Using the API 使用API
 
 ```bash
 python src/api.py
